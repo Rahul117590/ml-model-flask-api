@@ -10,3 +10,4 @@ def root():
 @app.get('/products')
 def products():
     return get_all_products()
+    

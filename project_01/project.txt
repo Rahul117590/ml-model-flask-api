@@ -1,0 +1,3 @@
+we just want to make the api which store the doctor data that store the patient data
+like create get delete retrive with the help of fast api 
+
