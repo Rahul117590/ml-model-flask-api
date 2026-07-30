@@ -1,9 +1,43 @@
 from fastapi import FastAPI,Path,HTTPException,Query
+from fastapi.responses import JSONResponse
 from pathlib import Path as filepath
 import json
-from typing import List,Dict
+from typing import List,Dict,Annotated,Literal
+from pydantic import BaseModel,Field,computed_field
+import os
 
 app= FastAPI()
+
+# create the class of base model
+class Patient(BaseModel):
+    id:Annotated[str,Field(...,description='ID of the patient',examples=['P001'])]
+    name:Annotated[str,Field(...,description='Name of the patient')]
+    city:Annotated[str,Field(...,description='Name of patient city')]
+    age:Annotated[int,Field(...,gt=0,lt=120,description='Age of the patient')]
+    gender:Annotated[Literal['male','female','other'],Field(...,description='gender of the patient')]
+    height:Annotated[float,Field(...,gt=0,description='height of the patient in Meters')]
+    weight:Annotated[float,Field(...,gt=0,description='weight of the patient in Kgs')]
+
+    @computed_field
+    @property
+    def bmi(self)->float:
+        bmi=round(self.weight/(self.height**2),2)
+        return bmi
+
+    @computed_field
+    @property
+    def verdict(self)->str:
+        if self.bmi < 18.5:
+            return 'Underweight'
+        elif self.bmi < 25:
+            return 'Normal'
+        elif self.bmi < 30 :
+            return 'Normal'
+        else:
+            return 'Obesses'
+
+
+
 
 # first make the data path 
 Data_file=filepath(__file__).parent.parent/'data'/'patients.json'
@@ -43,7 +77,7 @@ def sort_patients(sort_by:str=Query(...,description='sort on bassis of hight,wei
 order:str=Query('asc',description='sort in asc or desc order')):
 
 
-    valid_field=['heiht','weight','BMI']
+    valid_field=['height','weight','bmi']
     if sort_by not in valid_field:
         raise HTTPException(status_code=404,detail=f'Invalid field you have to put in{valid_field}')
     if order not in ('asc','desc'):
@@ -58,4 +92,25 @@ order:str=Query('asc',description='sort in asc or desc order')):
     sorted_data=sorted(data.values(),key=lambda x:x.get('sort_by',0),reverse=sort_order)
     return sorted_data
 
+
+
+def save_data(data: Dict[str, Dict]):
+    with open(Data_file, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4)
+
+
+@app.post('/create')
+def create_patient(patient:Patient):
+    # load the existing data
+    data=load_data()
+
+    # check the paitent already exist
+    if patient.id in data:
+        raise HTTPException(status_code=400,detail='Patient already exists')
+    # add the new patient in the database
+    data[patient.id]=patient.model_dump(exclude={'id'})
+
+    # save in the python file
+    save_data(data)
+    return JSONResponse(status_code=201,content={'message':'patient created successfully'})
 
