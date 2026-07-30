@@ -1,3 +1,21 @@
 we just want to make the api which store the doctor data that store the patient data
 like create get delete retrive with the help of fast api 
 
+
+for creating the create model u have to take the data from the user
+that time something you have to keep in your mind that it pydantic model
+
+
+for taking the data from you have to use some validation like only that are the data are valid 
+as user input for that u have to apply some of the validation like
+
+# =========================update and delete=======================================
+now we move toward update and delete endpoint 
+the problem with the update and delete point is that either the patient want to delete one 
+attribute like city address pin either he want to updata all the data 
+we make the logic in that way that we fully generate logic that if person delete one data 
+then he able to do that or in case if we want to update some data then he able to do that
+we need to make the new pydantic model
+the question is arrived that if already have pydantic model than why we make new 
+so the answer is is we update one thing from the pydantic model then our model expect we we need to make optional
+all the things required so that why
