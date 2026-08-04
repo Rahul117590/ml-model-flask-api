@@ -2,7 +2,7 @@ from fastapi import FastAPI,Path,HTTPException,Query
 from fastapi.responses import JSONResponse
 from pathlib import Path as filepath
 import json
-from typing import List,Dict,Annotated,Literal
+from typing import List,Dict,Annotated,Literal,Optional
 from pydantic import BaseModel,Field,computed_field
 import os
 
@@ -35,6 +35,15 @@ class Patient(BaseModel):
             return 'Normal'
         else:
             return 'Obesses'
+
+# we should write the code of upgrade pydantic
+class Patientupdate(BaseModel):
+    name: Annotated[optional[str],Field(default=None)]
+    city: Annotated[optional[str],Field(default=None)]
+    age: Annotated[optional[int],Field(default=None,gt=0)]
+    gender: Annotated[optional[Literal['male','female']],Field(default=None)]
+    height: Annotated[optional[int],Field(default=None,gt=0)]
+    weight:Annotated[optional[int],Field(default=None,gt=0)]
 
 
 
@@ -114,3 +123,20 @@ def create_patient(patient:Patient):
     save_data(data)
     return JSONResponse(status_code=201,content={'message':'patient created successfully'})
 
+# we need to make one more endpoint with the name of update
+@app.put('/edit/{patient_id}')
+def update_patient(patient_id:str,patient_update:Patientupdate):
+    data=load_data()
+    if patient_id not in data:
+        raise HTTPException(status_code=404,detail={'message':"Patient not found"})
+        existing_info=data[patient_id]
+        # first we need to change the patient object into the dictonary 
+        updated_patent_info=patient_update.model_dump(exclude_unset=True)
+        # exclude_unset equal to true means that the value that client give only that value
+
+        for key,value in updated_patent_info.item():
+            existing_patient_info[key]=value
+            # key(city),value(mumbai) it correct then city[mumbai]=value updated like that
+        
+        data[patient_id]=existing_info
+         
